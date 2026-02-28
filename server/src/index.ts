@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import readingsRouter from "./routes/readings";
 import openapiSpec from "./docs/openapi";
@@ -8,6 +9,15 @@ const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
+app.use(cors({
+  origin: [
+    "https://csc419-group7.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5173",
+  ],
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"],
+}));
 app.use(express.json());
 
 // ─── Swagger docs ─────────────────────────────────────────────────────────────
