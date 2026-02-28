@@ -12,6 +12,7 @@ const spec = {
   ],
   tags: [
     { name: "Readings", description: "Sensor data ingestion and retrieval" },
+    { name: "Devices", description: "Device-level controls (snooze/cooldown)" },
     { name: "Contacts", description: "SMS alert contact management" },
     { name: "Health", description: "Server health check" },
   ],
@@ -171,6 +172,74 @@ const spec = {
       },
     },
 
+    "/api/devices/{device_id}/snooze": {
+      post: {
+        tags: ["Devices"],
+        summary: "Activate SMS cooldown for a device",
+        description:
+          "Mutes SMS alerts for the device for SNOOZE_MINUTES (default 45). Call this after the cleaner finishes and sprays air freshener to prevent false-positive alerts.",
+        parameters: [
+          {
+            name: "device_id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            example: "aura_node_01",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Cooldown activated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    data: { $ref: "#/components/schemas/SnoozeResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "500": { $ref: "#/components/responses/ServerError" },
+        },
+      },
+      delete: {
+        tags: ["Devices"],
+        summary: "Cancel SMS cooldown for a device",
+        description: "Clears the active cooldown window so SMS alerts resume immediately.",
+        parameters: [
+          {
+            name: "device_id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            example: "aura_node_01",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Cooldown cancelled",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    data: { $ref: "#/components/schemas/SnoozeResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "500": { $ref: "#/components/responses/ServerError" },
+        },
+      },
+    },
+
     "/api/contacts": {
       post: {
         tags: ["Contacts"],
@@ -311,6 +380,26 @@ const spec = {
             type: "string",
             format: "date-time",
             example: "2026-02-28T05:00:39.728Z",
+          },
+          cooldown_until: {
+            type: "string",
+            format: "date-time",
+            nullable: true,
+            example: "2026-02-28T05:45:00.000Z",
+            description: "SMS alerts suppressed until this time. null means no active cooldown.",
+          },
+        },
+      },
+
+      SnoozeResponse: {
+        type: "object",
+        properties: {
+          device_id: { type: "string", example: "aura_node_01" },
+          cooldown_until: {
+            type: "string",
+            format: "date-time",
+            nullable: true,
+            example: "2026-02-28T05:45:00.000Z",
           },
         },
       },

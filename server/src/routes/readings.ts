@@ -8,6 +8,8 @@ import {
   getHistory,
   postContact,
   getContacts,
+  postSnooze,
+  deleteSnooze,
 } from "../controllers/readingsController";
 
 const router = Router();
@@ -42,6 +44,11 @@ router.post("/readings", validate(sensorPayloadSchema), postReading);
 router.get("/readings", getAllReadings);
 router.get("/readings/:device_id", getOneReading);
 router.get("/readings/:device_id/history", getHistory);
+
+// ─── Snooze routes ────────────────────────────────────────────────────────────
+
+router.post("/devices/:device_id/snooze", postSnooze);
+router.delete("/devices/:device_id/snooze", deleteSnooze);
 
 // ─── Contact routes ───────────────────────────────────────────────────────────
 

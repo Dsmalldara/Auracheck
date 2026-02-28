@@ -3,11 +3,18 @@ import path from "path";
 import sql from "./client";
 
 async function migrate() {
-  const migrationPath = path.join(__dirname, "migrations", "001_init.sql");
-  const migrationSQL = fs.readFileSync(migrationPath, "utf-8");
+  const migrationsDir = path.join(__dirname, "migrations");
+  const files = fs
+    .readdirSync(migrationsDir)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
 
   console.log("Running migrations against Neon DB...");
-  await sql.unsafe(migrationSQL);
+  for (const file of files) {
+    const migrationSQL = fs.readFileSync(path.join(migrationsDir, file), "utf-8");
+    console.log(`  Running ${file}...`);
+    await sql.unsafe(migrationSQL);
+  }
   console.log("Migration complete.");
   await sql.end();
 }

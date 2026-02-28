@@ -6,6 +6,8 @@ import {
   getDeviceHistory,
   createContact,
   getContactsByLocation,
+  snoozeDevice,
+  cancelSnooze,
 } from "../services/readingsService";
 
 // ─── POST /api/readings ───────────────────────────────────────────────────────
@@ -20,7 +22,7 @@ export async function postReading(req: Request, res: Response): Promise<void> {
 }
 
 // ─── GET /api/readings ────────────────────────────────────────────────────────
-export async function getAllReadings(req: Request, res: Response): Promise<void> {
+export async function getAllReadings(_req: Request, res: Response): Promise<void> {
   try {
     const readings = await getAllLatestReadings();
     res.json({ success: true, data: readings });
@@ -61,6 +63,36 @@ export async function getHistory(req: Request, res: Response): Promise<void> {
   } catch (err) {
     console.error("[getHistory]", err);
     res.status(500).json({ success: false, message: "Failed to fetch history." });
+  }
+}
+
+// ─── POST /api/devices/:device_id/snooze ─────────────────────────────────────
+export async function postSnooze(req: Request, res: Response): Promise<void> {
+  try {
+    const result = await snoozeDevice(req.params.device_id);
+    if (!result) {
+      res.status(404).json({ success: false, message: "Device not found." });
+      return;
+    }
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error("[postSnooze]", err);
+    res.status(500).json({ success: false, message: "Failed to set snooze." });
+  }
+}
+
+// ─── DELETE /api/devices/:device_id/snooze ────────────────────────────────────
+export async function deleteSnooze(req: Request, res: Response): Promise<void> {
+  try {
+    const result = await cancelSnooze(req.params.device_id);
+    if (!result) {
+      res.status(404).json({ success: false, message: "Device not found." });
+      return;
+    }
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error("[deleteSnooze]", err);
+    res.status(500).json({ success: false, message: "Failed to cancel snooze." });
   }
 }
 

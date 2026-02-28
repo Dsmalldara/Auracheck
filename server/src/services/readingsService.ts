@@ -7,6 +7,7 @@ import {
   LatestReading,
   ReadingStatus,
   SensorPayload,
+  SnoozeResponse,
 } from "../types/reading";
 
 // ─── Threshold helpers ────────────────────────────────────────────────────────
@@ -34,11 +35,15 @@ export async function ingestReading(payload: SensorPayload): Promise<LatestReadi
       SET location = EXCLUDED.location
   `;
 
-  // 2. Fetch previous status before overwriting
-  const [prev] = await sql<{ status: ReadingStatus }[]>`
-    SELECT status FROM readings WHERE device_id = ${device_id}
+  // 2. Fetch previous status and active cooldown in one query
+  const [prev] = await sql<{ status: ReadingStatus; cooldown_until: Date | null }[]>`
+    SELECT r.status, d.cooldown_until
+    FROM readings r
+    JOIN devices d ON d.device_id = r.device_id
+    WHERE r.device_id = ${device_id}
   `;
   const previousStatus: ReadingStatus | null = prev?.status ?? null;
+  const inCooldown = prev?.cooldown_until != null && prev.cooldown_until > new Date();
 
   // 3. Append to history
   await sql`
@@ -61,12 +66,13 @@ export async function ingestReading(payload: SensorPayload): Promise<LatestReadi
       readings.raw_value,
       readings.voltage,
       readings.status,
-      readings.updated_at
+      readings.updated_at,
+      (SELECT cooldown_until FROM devices WHERE device_id = readings.device_id) AS cooldown_until
   `;
 
-  // 5. Fire SMS only when spiking to moderate or critical
+  // 5. Fire SMS only when spiking to moderate/critical AND not in cooldown
   const isSpike = (newStatus === "moderate" || newStatus === "critical") && previousStatus !== newStatus;
-  if (isSpike) {
+  if (isSpike && !inCooldown) {
     const contacts = await sql<{ phone: string }[]>`
       SELECT phone FROM alert_contacts WHERE location = ${location}
     `;
@@ -75,6 +81,8 @@ export async function ingestReading(payload: SensorPayload): Promise<LatestReadi
     sendSmsAlert(phones, location, newStatus).catch((err) =>
       console.error("[SMS] Unhandled error:", err)
     );
+  } else if (isSpike && inCooldown) {
+    console.log(`[SMS] Suppressed for ${device_id} — cooldown active until ${prev?.cooldown_until}`);
   }
 
   return updated;
@@ -90,7 +98,8 @@ export async function getAllLatestReadings(): Promise<LatestReading[]> {
       r.raw_value,
       r.voltage,
       r.status,
-      r.updated_at
+      r.updated_at,
+      d.cooldown_until
     FROM readings r
     JOIN devices d ON d.device_id = r.device_id
     ORDER BY d.location ASC
@@ -107,7 +116,8 @@ export async function getLatestReadingByDevice(
       r.raw_value,
       r.voltage,
       r.status,
-      r.updated_at
+      r.updated_at,
+      d.cooldown_until
     FROM readings r
     JOIN devices d ON d.device_id = r.device_id
     WHERE r.device_id = ${deviceId}
@@ -130,6 +140,31 @@ export async function getDeviceHistory(
     LIMIT ${limit}
     OFFSET ${offset}
   `;
+}
+
+// ─── Snooze ───────────────────────────────────────────────────────────────────
+
+export async function snoozeDevice(deviceId: string): Promise<SnoozeResponse | null> {
+  const minutes = Number(process.env.SNOOZE_MINUTES ?? 45);
+  const cooldownUntil = new Date(Date.now() + minutes * 60 * 1000);
+
+  const [row] = await sql<SnoozeResponse[]>`
+    UPDATE devices
+    SET cooldown_until = ${cooldownUntil}
+    WHERE device_id = ${deviceId}
+    RETURNING device_id, cooldown_until
+  `;
+  return row ?? null;
+}
+
+export async function cancelSnooze(deviceId: string): Promise<SnoozeResponse | null> {
+  const [row] = await sql<SnoozeResponse[]>`
+    UPDATE devices
+    SET cooldown_until = NULL
+    WHERE device_id = ${deviceId}
+    RETURNING device_id, cooldown_until
+  `;
+  return row ?? null;
 }
 
 // ─── Locations summary ────────────────────────────────────────────────────────

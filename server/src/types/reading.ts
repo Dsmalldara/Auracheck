@@ -16,6 +16,7 @@ export interface LatestReading {
   voltage: number;
   status: ReadingStatus;
   updated_at: Date;
+  cooldown_until: Date | null;
 }
 
 // Row shape in `readings_history`
@@ -42,4 +43,10 @@ export interface CreateContactBody {
   location: string;
   phone: string;
   name?: string;
+}
+
+// Response for snooze/cancel endpoints
+export interface SnoozeResponse {
+  device_id: string;
+  cooldown_until: Date | null;
 }
