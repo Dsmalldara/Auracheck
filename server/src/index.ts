@@ -18,7 +18,7 @@ app.use(cors({
     "http://localhost:5173",
   ],
   methods: ["GET", "POST", "DELETE"],
-  allowedHeaders: ["Content-Type"],
+  allowedHeaders: ["Content-Type", "x-api-key"],
 }));
 app.use(express.json());
 

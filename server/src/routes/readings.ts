@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { validate } from "../middleware/validate";
+import { requireApiKey } from "../middleware/apiKey";
 import {
   postReading,
   getAllReadings,
@@ -40,7 +41,7 @@ const contactSchema = z.object({
 
 // ─── Reading routes ───────────────────────────────────────────────────────────
 
-router.post("/readings", validate(sensorPayloadSchema), postReading);
+router.post("/readings", requireApiKey, validate(sensorPayloadSchema), postReading);
 router.get("/readings", getAllReadings);
 router.get("/readings/:device_id", getOneReading);
 router.get("/readings/:device_id/history", getHistory);
