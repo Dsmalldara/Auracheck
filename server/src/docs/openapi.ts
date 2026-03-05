@@ -314,6 +314,42 @@ const spec = {
       },
     },
 
+    "/api/contacts/{id}": {
+      delete: {
+        tags: ["Contacts"],
+        summary: "Remove a contact by ID",
+        description: "Deletes an alert contact. Use the `id` returned from POST /api/contacts or GET /api/contacts.",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 1,
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Contact deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    data: { $ref: "#/components/schemas/AlertContact" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/ValidationError" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "500": { $ref: "#/components/responses/ServerError" },
+        },
+      },
+    },
+
     "/api/health": {
       get: {
         tags: ["Health"],

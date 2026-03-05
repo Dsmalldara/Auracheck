@@ -9,6 +9,7 @@ import {
   getHistory,
   postContact,
   getContacts,
+  removeContact,
   postSnooze,
   deleteSnooze,
 } from "../controllers/readingsController";
@@ -55,5 +56,6 @@ router.delete("/devices/:device_id/snooze", deleteSnooze);
 
 router.post("/contacts", validate(contactSchema), postContact);
 router.get("/contacts", getContacts);
+router.delete("/contacts/:id", removeContact);
 
 export default router;

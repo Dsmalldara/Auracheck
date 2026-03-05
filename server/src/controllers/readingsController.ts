@@ -6,6 +6,7 @@ import {
   getDeviceHistory,
   createContact,
   getContactsByLocation,
+  deleteContact,
   snoozeDevice,
   cancelSnooze,
 } from "../services/readingsService";
@@ -93,6 +94,26 @@ export async function deleteSnooze(req: Request, res: Response): Promise<void> {
   } catch (err) {
     console.error("[deleteSnooze]", err);
     res.status(500).json({ success: false, message: "Failed to cancel snooze." });
+  }
+}
+
+// ─── DELETE /api/contacts/:id ─────────────────────────────────────────────────
+export async function removeContact(req: Request, res: Response): Promise<void> {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id) || id < 1) {
+      res.status(400).json({ success: false, message: "Invalid contact id." });
+      return;
+    }
+    const contact = await deleteContact(id);
+    if (!contact) {
+      res.status(404).json({ success: false, message: "Contact not found." });
+      return;
+    }
+    res.json({ success: true, data: contact });
+  } catch (err) {
+    console.error("[removeContact]", err);
+    res.status(500).json({ success: false, message: "Failed to delete contact." });
   }
 }
 

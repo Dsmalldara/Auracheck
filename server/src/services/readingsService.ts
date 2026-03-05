@@ -200,6 +200,21 @@ export async function createContact(body: CreateContactBody): Promise<AlertConta
       SET name = EXCLUDED.name
     RETURNING *
   `;
+
+  // If the location is already moderate/critical, alert the new number immediately
+  const [current] = await sql<{ status: ReadingStatus }[]>`
+    SELECT r.status
+    FROM readings r
+    JOIN devices d ON d.device_id = r.device_id
+    WHERE d.location = ${body.location}
+    LIMIT 1
+  `;
+  if (current?.status === "moderate" || current?.status === "critical") {
+    sendSmsAlert([body.phone], body.location, current.status).catch((err) =>
+      console.error("[SMS] Failed to alert new contact:", err)
+    );
+  }
+
   return contact;
 }
 
@@ -209,4 +224,13 @@ export async function getContactsByLocation(location: string): Promise<AlertCont
     WHERE location = ${location}
     ORDER BY created_at ASC
   `;
+}
+
+export async function deleteContact(id: number): Promise<AlertContact | null> {
+  const [row] = await sql<AlertContact[]>`
+    DELETE FROM alert_contacts
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  return row ?? null;
 }
