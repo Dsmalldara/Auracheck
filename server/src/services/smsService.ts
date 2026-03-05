@@ -15,11 +15,11 @@ function getClient() {
 function buildMessage(location: string, newStatus: ReadingStatus): string {
   switch (newStatus) {
     case "critical":
-      return `AURACHECK ALERT: ${location} needs immediate cleaning. Air quality is CRITICAL. Please attend to it now!`;
+      return `[Hostel Monitor] CRITICAL air quality at ${location}. Immediate cleaning required!`;
     case "moderate":
-      return `AURACHECK NOTICE: ${location} air quality is MODERATE. Schedule a cleaning soon.`;
+      return `[Hostel Monitor] MODERATE air quality at ${location}. Please schedule a cleaning soon.`;
     default:
-      return `AURACHECK: ${location} status changed to ${newStatus}.`;
+      return `[Hostel Monitor] ${location} status changed to ${newStatus}.`;
   }
 }
 

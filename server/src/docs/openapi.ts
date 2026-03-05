@@ -1,10 +1,10 @@
 const spec = {
   openapi: "3.0.3",
   info: {
-    title: "AuraCheck API",
+    title: "Smart Hostel Hygiene Monitor API",
     version: "1.0.0",
     description:
-      "Smart Hostel Hygiene Monitor — Backend API. Ingests MQ-135 sensor readings from NodeMCU devices and triggers SMS alerts via Twilio when air quality spikes.",
+      "Smart Hostel Hygiene Monitor (AuraCheck) — Backend API. Ingests MQ-135 sensor readings from NodeMCU devices and triggers SMS alerts via Twilio when air quality spikes.",
   },
   servers: [
     { url: "http://localhost:5000", description: "Local dev" },
